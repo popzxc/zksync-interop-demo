@@ -14,9 +14,12 @@
   "dependencies": {
     "@fontsource/roboto": "5.2.6",
     "@mdi/font": "7.4.47",
+    "@vueuse/core": "^13.6.0",
+    "ethers": "^6.15.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
-    "vuetify": "^3.9.1"
+    "vuetify": "^3.9.1",
+    "zksync-ethers": "^6.19.0"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",

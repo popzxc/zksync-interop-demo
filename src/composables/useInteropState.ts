@@ -7,13 +7,15 @@ export enum InteropMessageState {
     WaitingToAppearOnTargetL2 = 'waitingToAppearOnTargetL2',
     BroadcastingTxOnTargetL2 = 'broadcastingTxOnTargetL2',
     Finalized = 'finalized',
+    Failed = 'failed',
 }
 
 export interface InteropRequestForDisplay {
     from: ChainKind;
     to: ChainKind;
-    txHash: string,
+    txHash: string;
     status: InteropMessageState;
+    error?: string;
 }
 
 // map would be more efficient, but who cares
@@ -24,10 +26,13 @@ export default function useInteropState() {
         interopRequests.value.push(request);
     };
 
-    const updateRequest = (txHash: string, status: InteropMessageState) => {
+    const updateRequest = (txHash: string, status: InteropMessageState, error?: string) => {
         const request = interopRequests.value.find(req => req.txHash === txHash);
         if (request && request.status !== status) {
             request.status = status;
+            if (error) {
+                request.error = error;
+            }
         } else {
             console.warn(`Request with txHash ${txHash} not found for update.`);
         }

@@ -3,6 +3,7 @@ import * as ethers from "ethers";
 import { ChainKind } from '../types';
 
 import { ETH_ADDRESS_IN_CONTRACTS } from "../sdk/constants";
+import { L1_RPC_URL, GATEWAY_RPC_URL, VALIDIUM_RPC_URL, ERA_RPC_URL } from '@/config';
 
 export enum WalletKind {
     User = 'user',
@@ -17,10 +18,10 @@ const privateKeys = {
 };
 
 const providers = {
-    [ChainKind.L1]: new zksync.Provider('http://127.0.1:8545'),
-    [ChainKind.Gateway]: new zksync.Provider('http://127.0.0.1:3150'),
-    [ChainKind.Era]: new zksync.Provider('http://127.0.0.1:3050'),
-    [ChainKind.Validium]: new zksync.Provider('http://127.0.0.1:3250')
+    [ChainKind.L1]: new zksync.Provider(L1_RPC_URL),
+    [ChainKind.Gateway]: new zksync.Provider(GATEWAY_RPC_URL),
+    [ChainKind.Era]: new zksync.Provider(ERA_RPC_URL),
+    [ChainKind.Validium]: new zksync.Provider(VALIDIUM_RPC_URL)
 };
 
 export function useWallet(chain: ChainKind, kind: WalletKind) {

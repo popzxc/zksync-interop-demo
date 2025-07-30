@@ -1,6 +1,6 @@
 import { shallowRef, triggerRef } from 'vue';
 import * as zksync from 'zksync-ethers';
-import { broadcastInteropTx, getGWBlockNumber, waitForInteropRootNonZero } from '../sdk/finalizer/utils';
+import { InteropRequestFinalizer } from '../sdk/finalizer/finalizer';
 import { sleep } from 'zksync-ethers/build/utils';
 
 import { ChainKind } from '../types';
@@ -31,7 +31,7 @@ const interopState = useInteropState();
 
 export function useInteropFinalizer() {
     const addRequest = (request: InteropRequest) => {
-        const kind = request.from;
+        const kind = request.to;
         pendingRequests[kind]?.push(request);
         console.log(`Request added for ${kind}: ${request.txReceipt.hash}`);
         interopState.addRequest({
@@ -58,7 +58,12 @@ export function useInteropFinalizer() {
         if (request) {
             const { wallet } = useWallet(kind, WalletKind.Finalizer);
 
-            await finalizeRequest(request, wallet.provider, wallet);
+            try {
+                await finalizeRequest(request, wallet.provider, wallet);
+            } catch (error: any) {
+                console.error(`Failed to finalize request for ${kind}:`, error);
+                interopState.updateRequest(request.txReceipt.hash, InteropMessageState.Failed, error.toString());
+            }
 
             finalizedRequests[kind].push(request);
             pendingRequests[kind].shift();
@@ -66,49 +71,41 @@ export function useInteropFinalizer() {
         return null;
     };
 
-    const waitUntilFinalizedOnSourceChain = async (request: InteropRequest, provider: zksync.Provider) => {
-        while (true) {
-            const block = await provider.getBlock('finalized');
-            if (block.number >= request.txReceipt.blockNumber) {
-                console.log(`Request ${request.txReceipt.hash} is finalized on source chain`);
-                return;
-            }
-            await sleep(500);
-        }
-    };
-
-    const waitUntilFinalizedOnGateway = async (request: InteropRequest) => {
-        const sourceUtilityWallet = new zksync.Wallet(zksync.Wallet.createRandom().privateKey, request.sourceProvider);
-        while (true) {
-            try {
-                let finalizeWithdrawalParams = await sourceUtilityWallet.getFinalizeWithdrawalParams(request.txReceipt.hash, 0, 'proof_based_gw');
-                return finalizeWithdrawalParams;
-            } catch (error) {
-                // TODO: probably some handling would be nice
-            }
-            await sleep(500);
-        }
-    };
-
     const finalizeRequest = async (request: InteropRequest, provider: zksync.Provider, chainMover: zksync.Wallet) => {
+        const finalizer = new InteropRequestFinalizer(
+            provider,
+            request.sourceProvider,
+            request.txReceipt,
+            chainMover,
+        );
+
         interopState.updateRequest(request.txReceipt.hash, InteropMessageState.WaitingForFinalizeOnL2);
 
         // 1. Batch with transaction should be finalized on source chain
-        await waitUntilFinalizedOnSourceChain(request, provider);
+        while (!await finalizer.isRequestFinalizedOnSourceChain()) {
+            await sleep(500);
+        };
         interopState.updateRequest(request.txReceipt.hash, InteropMessageState.WaitingForFinalizeOnGateway);
 
         // 2. `finalizeWithdrawalParams` will only be available after the batch is finalized on the gateway.
-        const finalizeWithdrawalParams = await waitUntilFinalizedOnGateway(request);
+        let finalizeWithdrawalParams = await finalizer.getFinalizeWithdrawalParams();
+        while (!finalizeWithdrawalParams) {
+            await sleep(500);
+            finalizeWithdrawalParams = await finalizer.getFinalizeWithdrawalParams();
+        }
         interopState.updateRequest(request.txReceipt.hash, InteropMessageState.WaitingToAppearOnTargetL2);
 
         // 3. Wait for the target chain to fetch interop roots from the gateway.
-        const GW_CHAIN_ID = 506n;
-        const gatewayBatchNumber = getGWBlockNumber(finalizeWithdrawalParams);
-        await waitForInteropRootNonZero(provider, chainMover, GW_CHAIN_ID, gatewayBatchNumber);
+        while (!await finalizer.canFinalize(finalizeWithdrawalParams)) {
+            await sleep(5000);
+            if (finalizer.targetChainMover) {
+                await finalizer.devMoveChain();
+            }
+        }
         interopState.updateRequest(request.txReceipt.hash, InteropMessageState.BroadcastingTxOnTargetL2);
 
         // 4. Finally, broadcast the transaction on the target L2 chain.
-        await broadcastInteropTx(request.sourceProvider, provider, request.txReceipt.hash);
+        await finalizer.finalize();
         interopState.updateRequest(request.txReceipt.hash, InteropMessageState.Finalized);
     };
 

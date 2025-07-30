@@ -9,14 +9,16 @@ export interface InteropTokenMeta {
     decimals: number,
     l2Address: string,
     assetId: string,
-    l2AddressSecondChain: string,
 };
 
 /**
  * Represents a token on the source chain.
+ * This class is a wrapper around the MintableERC20 contract,
+ * which also has metadata associated with interop.
  */
 export class Token {
     private constructor(
+        public owner: string,
         public meta: InteropTokenMeta,
         private contract: zksync.Contract,
     ) {
@@ -24,7 +26,7 @@ export class Token {
 
     public static fromMeta(wallet: zksync.Wallet, meta: InteropTokenMeta): Token {
         const contract = new zksync.Contract(meta.l2Address, ArtifactMintableERC20.abi, wallet);
-        return new Token(meta, contract);
+        return new Token(wallet.address, meta, contract);
     }
 
     public static async deploy(wallet: zksync.Wallet, name: string, symbol: string, decimals: number): Promise<Token> {
@@ -39,17 +41,23 @@ export class Token {
 
         await (await interopContracts.nativeTokenVault.registerToken(l2Address)).wait();
         const assetId = await interopContracts.nativeTokenVault.assetId(l2Address);
-        const l2AddressSecondChain = await interopContracts.nativeTokenVault.tokenAddress(assetId);
         const meta = {
             name,
             symbol,
             decimals,
             l2Address,
-            assetId,
-            l2AddressSecondChain
+            assetId
         };
-        const token = new Token(meta, contract);
+        const token = new Token(wallet.address, meta, contract);
         return token;
+    }
+
+    public async name(): Promise<string> {
+        return await this.contract.name();
+    }
+
+    public async symbol(): Promise<string> {
+        return await this.contract.symbol();
     }
 
     public async mint(address: string, amount: bigint): Promise<void> {
@@ -60,11 +68,25 @@ export class Token {
         await (await this.contract.approve(spender, amount)).wait();
     }
 
+    public async allowance(spender: string): Promise<bigint> {
+        return await this.contract.allowance(this.owner, spender);
+    }
+
+    public async getBalance(address: string): Promise<bigint> {
+        return await this.contract.balanceOf(address);
+    }
+
     /**
      * Returns the interop token interface for the destination chain.
      */
-    public asInteropToken(provider: zksync.Provider): InteropToken {
-        return new InteropToken(provider, this.meta.l2AddressSecondChain);
+    public async asInteropToken(provider: zksync.Provider): Promise<InteropToken | null> {
+        const targetInteropContracts = new InteropContracts(provider);
+        const l2AddressSecondChain = await targetInteropContracts.nativeTokenVault.tokenAddress(this.meta.assetId);
+        if (l2AddressSecondChain === '0x0000000000000000000000000000000000000000') {
+            return null;
+        }
+
+        return new InteropToken(provider, l2AddressSecondChain);
     }
 };
 
@@ -73,21 +95,26 @@ export class Token {
  * It is assumed to be already deployed and registered.
  */
 export class InteropToken {
+    private contract: zksync.Contract;
+
     public constructor(
         private provider: zksync.Provider,
-        private tokenAddress: string,
-    ) { }
+        public address: string,
+    ) {
+        this.contract = new zksync.Contract(this.address, ArtifactMintableERC20.abi, this.provider);
+
+    }
 
     public async getBalance(address: string): Promise<bigint> {
-        if (!this.tokenAddress) {
-            throw new Error('Token address is not provided');
-        }
-        if (this.tokenAddress === ethers.ZeroAddress) {
-            // Happens when token wasn't deployed yet. Therefore there is no balance.
-            return 0n;
-        }
-        const tokenContract = new zksync.Contract(this.tokenAddress, ArtifactMintableERC20.abi, this.provider);
-        return await tokenContract.balanceOf(address);
+        return await this.contract.balanceOf(address);
+    }
+
+    public async name(): Promise<string> {
+        return await this.contract.name();
+    }
+
+    public async symbol(): Promise<string> {
+        return await this.contract.symbol();
     }
 }
 

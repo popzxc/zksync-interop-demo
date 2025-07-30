@@ -62,14 +62,23 @@ const statusMapping = {
     color: 'green',
     icon: 'mdi-check-circle-outline'
   },
+  [InteropMessageState.Failed]: {
+    text: 'Error occurred (exception was thrown during processing)',
+    color: 'red',
+    icon: 'mdi-alert-circle-outline'
+  }
 };
 
 const requestToListItem = (request: InteropRequestForDisplay) => {
+  const text = statusMapping[request.status].text;
+  const subtitle = request.error
+    ? `${text} - Error: ${request.error}`
+    : text;
   return {
     title: `(${request.from} -> ${request.to}) ${request.txHash}`,
-    subtitle: statusMapping[request.status].text,
+    subtitle,
     icon: statusMapping[request.status].icon,
-    color: statusMapping[request.status].color
+    color: statusMapping[request.status].color,
   };
 };
 

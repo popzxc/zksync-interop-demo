@@ -18,7 +18,8 @@ initializedChains.set(ChainKind.Validium, ref(false));
 export interface ChainData {
     sender: string;
     senderBalance: bigint;
-    blockNumber: number;
+    latestBlock: number;
+    finalizedBlock: number;
 }
 
 export default function useChain(kind: ChainKind) {
@@ -58,12 +59,14 @@ export default function useChain(kind: ChainKind) {
     }
 
     const getData = async (): Promise<ChainData> => {
-        const block = await interopWallet.wallet.provider.getBlock('finalized');
+        const latestBlock = await interopWallet.wallet.provider.getBlock('latest');
+        const finalizedBlock = await interopWallet.wallet.provider.getBlock('finalized');
         const balance = await interopWallet.wallet.provider.getBalance(interopWallet.wallet.address);
         return {
             sender: interopWallet.wallet.address,
             senderBalance: balance,
-            blockNumber: block.number
+            latestBlock: latestBlock.number,
+            finalizedBlock: finalizedBlock.number
         };
     };
 
@@ -89,15 +92,21 @@ export default function useChain(kind: ChainKind) {
             throw new Error("This method is only available for L2 chains.");
         }
 
-        const transferAmount = 100n;
+        const transferAmount = ethers.parseEther('1');
+
+        if (await token.allowance(L2_NATIVE_TOKEN_VAULT_ADDRESS) < transferAmount) {
+            // Mint more than needed to avoid repeated transactions on each submission.
+            const mintAmount = ethers.parseEther('5000');
+            await token.approve(L2_NATIVE_TOKEN_VAULT_ADDRESS, mintAmount);
+            await token.mint(interopWallet.wallet.address, mintAmount);
+        }
+
+
+        const sourceNetwork = await interopWallet.wallet.provider.getNetwork();
         const chain2Contracts = new InteropContracts(targetChainRichWallet);
-
-        await token.approve(L2_NATIVE_TOKEN_VAULT_ADDRESS, transferAmount);
-        await token.mint(interopWallet.wallet.address, transferAmount);
-
         const aliasedInterop1WalletAddress = await chain2Contracts.aliasedAccount(
             interopWallet.wallet.address,
-            0n
+            sourceNetwork.chainId
         );
         console.log('aliasedInterop1WalletAddress', aliasedInterop1WalletAddress);
 

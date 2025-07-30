@@ -46,7 +46,7 @@ onMounted(async () => {
         <v-col cols="6" v-if="isReady">
           <Chain :chain="ChainKind.Validium" :connected-chain="ChainKind.Era" />
         </v-col>
-        <v-col cols="12">
+        <v-col cols="12" v-if="!isReady">
           <v-card><p>{{ status }}</p></v-card>
         </v-col>
       </v-row>

@@ -25,42 +25,56 @@
   </v-card>
 </template>
 
-<script setup>
-import { computed } from 'vue';
+<script lang="ts" setup>
+import useInteropState, { InteropMessageState, type InteropRequestForDisplay } from '@/composables/useInteropState';
 
-import { useInteropFinalizer } from '../composables/useInteropFinalizer';
 
-const { pendingRequests, finalizedRequests } = useInteropFinalizer();
+const { interopRequests } = useInteropState();
 
-const allRequests = computed(() => {
-      const allRequests = [];
-      for (const [kind, r] of pendingRequests.value) {
-        for (const request of r) {
-          allRequests.push(
-          {
-            title: `(${request.from} -> ${request.to})`,
-            subtitle: `${request.txReceipt.hash} (${request.status})`,
-            icon: 'mdi-clock-outline',
-            color: 'white'
-          });
-        }
-      }
-      for (const [kind, r] of finalizedRequests.value) {
-        for (const request of r) {
-          allRequests.push(
-          {
-            title: `(${request.from} -> ${request.to})`,
-            subtitle: `${request.txReceipt.hash} (${request.status})`,
-            icon: 'mdi-check-circle-outline',
-            color: 'green'
-          });
-        }
-      }
+const statusMapping = {
+  [InteropMessageState.Initiated]: {
+    text: 'Initiated',
+    color: 'white',
+    icon: 'mdi-clock-outline'
+  },
+  [InteropMessageState.WaitingForFinalizeOnL2]: {
+    text: 'Waiting for finalize on L2',
+    color: 'white',
+    icon: 'mdi-clock-outline'
+  },
+  [InteropMessageState.WaitingForFinalizeOnGateway]: {
+    text: 'Waiting for finalize on Gateway',
+    color: 'white',
+    icon: 'mdi-clock-outline'
+  },
+  [InteropMessageState.WaitingToAppearOnTargetL2]: {
+    text: 'Waiting to appear on Target L2',
+    color: 'white',
+    icon: 'mdi-clock-outline'
+  },
+  [InteropMessageState.BroadcastingTxOnTargetL2]: {
+    text: 'Broadcasting transaction on Target L2',
+    color: 'white',
+    icon: 'mdi-clock-outline'
+  },
+  [InteropMessageState.Finalized]: {
+    text: 'Finalized',
+    color: 'green',
+    icon: 'mdi-check-circle-outline'
+  },
+};
 
-      console.log(`All requests: ${JSON.stringify(allRequests, null, 2)}`);
+const requestToListItem = (request: InteropRequestForDisplay) => {
+  return {
+    title: `(${request.from} -> ${request.to}) ${request.txHash}`,
+    subtitle: statusMapping[request.status].text,
+    icon: statusMapping[request.status].icon,
+    color: statusMapping[request.status].color
+  };
+};
 
-      return allRequests;
-    }
+const allRequests = computed(
+  () => interopRequests.value.map(requestToListItem)
 );
 
 </script>

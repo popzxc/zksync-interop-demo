@@ -31,4 +31,10 @@ npm install
 npm run dev
 ```
 
-## 
+## Working with the project
+
+The project has two main goals:
+
+1. Provide a visual representation of the interop message lifecycle.
+2. Provide a learning environment to see how interop can be integrated in a (somewhat) real dApp.
+

@@ -26,6 +26,11 @@ export default function useInteropState() {
         interopRequests.value.push(request);
     };
 
+    const requestStatus = (txHash: string): InteropMessageState | undefined => {
+        const request = interopRequests.value.find(req => req.txHash === txHash);
+        return request ? request.status : undefined;
+    };
+
     const updateRequest = (txHash: string, status: InteropMessageState, error?: string) => {
         const request = interopRequests.value.find(req => req.txHash === txHash);
         if (request && request.status !== status) {
@@ -42,6 +47,7 @@ export default function useInteropState() {
     return {
         interopRequests,
         addRequest,
-        updateRequest
+        updateRequest,
+        requestStatus
     }
 }

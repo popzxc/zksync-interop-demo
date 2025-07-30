@@ -116,7 +116,6 @@ onUnmounted(() => {
       <SubmitInteropTxButton :from="chain.kind" :to="connectedChain.kind" />
     </v-card-item>
   </v-card>
-
 </template>
 
 <style scoped>

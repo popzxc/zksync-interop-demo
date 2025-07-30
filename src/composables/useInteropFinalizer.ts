@@ -14,6 +14,8 @@ export interface InteropRequest {
     sourceProvider: zksync.Provider;
 }
 
+const instances: any = {};
+
 const pendingRequests = {
     [ChainKind.Era]: [] as InteropRequest[],
     [ChainKind.Validium]: [] as InteropRequest[],
@@ -29,7 +31,7 @@ const finalizedRequests = {
 
 const interopState = useInteropState();
 
-export function useInteropFinalizer() {
+export default function useInteropFinalizer() {
     const addRequest = (request: InteropRequest) => {
         const kind = request.to;
         pendingRequests[kind]?.push(request);
@@ -48,12 +50,12 @@ export function useInteropFinalizer() {
         }
 
         while (true) {
-            await step(kind);
+            await processNextRequest(kind);
             await sleep(1000);
         }
     };
 
-    const step = async (kind: ChainKind) => {
+    const processNextRequest = async (kind: ChainKind) => {
         const request = pendingRequests[kind][0];
         if (request) {
             const { wallet } = useWallet(kind, WalletKind.Finalizer);
@@ -61,8 +63,12 @@ export function useInteropFinalizer() {
             try {
                 await finalizeRequest(request, wallet.provider, wallet);
             } catch (error: any) {
-                console.error(`Failed to finalize request for ${kind}:`, error);
-                interopState.updateRequest(request.txReceipt.hash, InteropMessageState.Failed, error.toString());
+                // TODO: right now there is a race condition where `run` function can be called multiple times
+                // because of hot reload. This is a dirty hack to not overwrite the status from finalized to failed.
+                if (interopState.requestStatus(request.txReceipt.hash) !== InteropMessageState.Finalized) {
+                    console.error(`Failed to finalize request for ${kind}:`, error);
+                    interopState.updateRequest(request.txReceipt.hash, InteropMessageState.Failed, error.toString());
+                }
             }
 
             finalizedRequests[kind].push(request);
@@ -113,6 +119,7 @@ export function useInteropFinalizer() {
         pendingRequests,
         finalizedRequests,
         addRequest,
+        processNextRequest,
         run
     };
 }

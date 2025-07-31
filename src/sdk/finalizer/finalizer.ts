@@ -97,7 +97,7 @@ export class InteropRequestFinalizer {
         try {
             const tx = await this.targetChainMover.transfer({
                 to: this.targetChainMover.address,
-                amount: 0,
+                amount: 1,
                 token: ETH_ADDRESS
             });
             await tx.wait();

@@ -4,6 +4,8 @@ This project contains a demo for ZKsync Interop tailored for understanding
 how interop works under the hood.
 
 This project targets v31 protocol version.
+Right now this project uses proof-based interop, which is the slowest form. You can read about it
+[here](https://matter-labs.github.io/zksync-era/core/latest/specs/contracts/interop/forms_of_finality.html).
 
 ⚠️ I'm not a front-end dev and I don't know what I'm doing. Forgive me, front-end gods.
 ⚠️ The project is quickly hacked around and has bugs, see "Known problems" section below.
@@ -98,6 +100,11 @@ application instead.
 Several times I've encountered situation where requests suddenly stop finalizing, usually if I dropped
 a few requests while they weren't finalized. Not sure why it happens, but in such case the solution
 is to re-initialize the chains and start from fresh state.
+
+### No fee estimation
+
+Right now, gas limits and fees for interop transactions are hardcoded. Making it work "properly" is left
+as an exercise for the reader.
 
 ## License
 

@@ -103,7 +103,7 @@ export default function useInteropFinalizer() {
 
         // 3. Wait for the target chain to fetch interop roots from the gateway.
         while (!await finalizer.canFinalize(finalizeWithdrawalParams)) {
-            await sleep(5000);
+            await sleep(500);
             if (finalizer.targetChainMover) {
                 await finalizer.devMoveChain();
             }

@@ -43,3 +43,5 @@ cp "$L1_CONTRACTS_DIR/AssetTracker.sol/AssetTracker.json" "$DEST_DIR"
 cp "$SYSTEM_CONTRACTS_DIR/L2InteropRootStorage.sol/L2InteropRootStorage.json" "$DEST_DIR"
 
 cp "$L1_CONTRACTS_ZKOUT_DIR/TestnetERC20Token.sol/TestnetERC20Token.json" "$DEST_DIR"
+
+cp "./contracts/zkout/Counter.sol/Counter.json" "$DEST_DIR"

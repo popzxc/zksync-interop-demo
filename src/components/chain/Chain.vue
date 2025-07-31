@@ -138,8 +138,8 @@ onUnmounted(() => {
       <InfoPopup mainText="Aliased token" helpText="When you transfer interop token to another chain, an 'aliased' version of this token will be automatically deployed there upon first interop transfer _finalization_. Before that, aliased token doesn't exist on the destination chain." />
       on {{ connectedChain.name }} is {{ data.aliasedErc20Status }}
     </v-card-item>
-    <v-card-item v-if="aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} address on {{ connectedChain.name }}: {{ data.aliasedErc20Address }}</v-card-item>
-    <v-card-item v-if="aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} Balance on {{ connectedChain.name }} (aliased): {{ ethers.formatEther(data.erc20BalanceOnConnectedChain) }}</v-card-item>
+    <v-card-item v-if="data.aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} address on {{ connectedChain.name }}: {{ data.aliasedErc20Address }}</v-card-item>
+    <v-card-item v-if="data.aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} Balance on {{ connectedChain.name }} (aliased): {{ ethers.formatEther(data.erc20BalanceOnConnectedChain) }}</v-card-item>
     
     
     <v-divider></v-divider>

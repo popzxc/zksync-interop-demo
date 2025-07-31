@@ -4,10 +4,10 @@ import * as zksync from 'zksync-ethers';
 import * as ethers from 'ethers';
 
 import useInteropFinalizer, { type InteropRequest } from './useInteropFinalizer';
-import { InteropContracts } from '../sdk/interop/contracts';
 import { useWallet, WalletKind } from "./useWallet";
 import { ChainKind } from '../types';
 import useToken from './useToken';
+import useCounter from './useCounter';
 import { InteropTxSender } from '@/sdk/interop/sender';
 
 const initializedChains = new Map<ChainKind, Ref<boolean>>();
@@ -50,6 +50,9 @@ export default function useChain(kind: ChainKind) {
         const { deployTokenIfNeeded } = useToken();
         await deployTokenIfNeeded(kind);
 
+        const { deployCounterIfNeeded } = useCounter();
+        await deployCounterIfNeeded(kind);
+
         if (finalizerWallet !== null) {
             interopFinalizer.run(kind);
         }
@@ -78,9 +81,11 @@ export default function useChain(kind: ChainKind) {
     };
 
     const sendTokenToAnotherChain = async (
-        targetChainId: bigint,
-        targetChainRichWallet: zksync.Wallet
+        to: ChainKind,
     ): Promise<zksync.types.TransactionReceipt> => {
+        const toChain = useChain(to);
+        const targetNetwork = await toChain.interopWallet.provider.getNetwork();
+
         const { getToken } = useToken();
         const token = await getToken(kind);
         if (!token) {
@@ -98,10 +103,30 @@ export default function useChain(kind: ChainKind) {
         return await sender.initiateInteropTransfer(
             token.meta.l2Address,
             transferAmount,
-            targetChainId,
-            targetChainRichWallet.provider
+            targetNetwork.chainId,
+            toChain.interopWallet.provider
         );
     };
+
+    const callCounterOnAnotherChain = async (to: ChainKind): Promise<zksync.types.TransactionReceipt> => {
+        const toChain = useChain(to);
+        const targetNetwork = await toChain.interopWallet.provider.getNetwork();
+
+        const { getCounter } = useCounter();
+        const counter = await getCounter(to);
+        if (!counter) {
+            throw new Error("Counter is not initialized for the target chain.");
+        }
+        const incrementCalldata = counter.incrementCalldata();
+
+        const sender = new InteropTxSender(interopWallet.wallet);
+
+        return await sender.callContract(
+            targetNetwork.chainId,
+            counter.meta.l2Address,
+            incrementCalldata,
+        );
+    }
 
     return {
         name: kind.toString(),
@@ -111,6 +136,7 @@ export default function useChain(kind: ChainKind) {
         getData,
         addInteropRequest,
         isInitialized,
-        sendTokenToAnotherChain
+        sendTokenToAnotherChain,
+        callCounterOnAnotherChain
     };
 }

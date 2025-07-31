@@ -5,3 +5,8 @@ export enum ChainKind {
     Validium = 'validium'
 }
 
+export enum ButtonAction {
+    TransferToken = 'TransferToken',
+    IncrementCounter = 'IncrementCounter',
+    IncrementCounterSameChain = 'IncrementCounterSameChain',
+}

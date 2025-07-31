@@ -4,7 +4,8 @@ import * as ethers from 'ethers';
 
 import useChain from '../../composables/useChain';
 import useToken from '../../composables/useToken';
-import { ChainKind } from '../../types';
+import useCounter from '../../composables/useCounter';
+import { ChainKind, ButtonAction } from '../../types';
 
 import { InteropTxSender } from '../../sdk/interop/sender';
 
@@ -19,6 +20,7 @@ const props = defineProps({
 const chain = useChain(props.chain);
 const connectedChain = useChain(props.connectedChain);
 const { getToken } = useToken();
+const { getCounter } = useCounter(); 
 
 const data = ref({
     latestBlock: 0,
@@ -35,6 +37,10 @@ const data = ref({
     aliasedErc20Address: '',
     aliasedErc20Symbol: '',
     erc20BalanceOnConnectedChain: 0n,
+
+    counterAddress: '',
+    counterValue: 0n,
+    counterLastCaller: '',
 });
 
 let intervalId;
@@ -50,6 +56,7 @@ async function fetchData() {
   isRunning = true;
 
   const token = await getToken(chain.kind);
+  const counter = await getCounter(chain.kind);
   const interopSender = new InteropTxSender(chain.interopWallet);
   const interopToken = await token.asInteropToken(connectedChain.interopWallet.provider);
 
@@ -63,6 +70,10 @@ async function fetchData() {
     data.value.erc20Balance = await token.getBalance(chain.interopWallet.address);
     data.value.erc20Symbol = await token.symbol();
     data.value.erc20Address = token.meta.l2Address;
+
+    data.value.counterAddress = counter.meta.l2Address;
+    data.value.counterValue = await counter.number();
+    data.value.counterLastCaller = await counter.lastCaller();
 
     const aliasedAddress = await interopSender.aliasedAccount(connectedChain.interopWallet.provider);
     data.value.aliasedSender = aliasedAddress;
@@ -112,9 +123,26 @@ onUnmounted(() => {
     <v-card-item> Aliased token on {{ connectedChain.name }} is {{ data.aliasedErc20Status }}</v-card-item>
     <v-card-item> {{ data.aliasedErc20Symbol }} address on {{ connectedChain.name }}: {{ data.aliasedErc20Address }}</v-card-item>
     <v-card-item> {{ data.aliasedErc20Symbol }} Balance on {{ connectedChain.name }} (aliased): {{ ethers.formatEther(data.erc20BalanceOnConnectedChain) }}</v-card-item>
+    
+    
+    <v-divider></v-divider>
+
+    <v-card-item> Counter address: {{ data.counterAddress }}</v-card-item>
+    <v-card-item> Counter value: {{ data.counterValue }}</v-card-item>
+    <v-card-item> Last caller: {{ data.counterLastCaller }}</v-card-item>
+    
     <v-card-item>
-      <SubmitInteropTxButton :from="chain.kind" :to="connectedChain.kind" />
+      <SubmitInteropTxButton :action="ButtonAction.TransferToken" :from="chain.kind" :to="connectedChain.kind" />
     </v-card-item>
+    
+    <v-card-item>
+      <SubmitInteropTxButton :action="ButtonAction.IncrementCounter" :from="chain.kind" :to="connectedChain.kind" />
+    </v-card-item>
+    
+    <v-card-item>
+      <SubmitInteropTxButton :action="ButtonAction.IncrementCounterSameChain" :from="chain.kind" :to="connectedChain.kind" />
+    </v-card-item>
+    
   </v-card>
 </template>
 

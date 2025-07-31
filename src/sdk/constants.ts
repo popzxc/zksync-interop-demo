@@ -37,17 +37,6 @@ export const INTEROP_BUNDLE_ABI =
 export const MESSAGE_INCLUSION_PROOF_ABI =
     'tuple(uint256 chainId, uint256 l1BatchNumber, uint256 l2MessageIndex, tuple(uint16 txNumberInBatch, address sender, bytes data) message, bytes32[] proof)';
 
-// Read contract artifacts
-// export const ArtifactBridgeHub = require('abi/Bridgehub.json');
-// export const ArtifactInteropCenter = require('abi/InteropCenter.json');
-// export const ArtifactInteropHandler = require('abi/InteropHandler.json');
-// export const ArtifactL2InteropRootStorage = require('abi/L2InteropRootStorage.json');
-// export const ArtifactL2MessageVerification = require('abi/L2MessageVerification.json');
-// export const ArtifactNativeTokenVault = require('abi/L2NativeTokenVault.json');
-// export const ArtifactMintableERC20 = require('abi/TestnetERC20Token.json');
-// export const ArtifactL1AssetRouter = require('abi/L1AssetRouter.json');
-// export const ArtifactAssetTracker = require('abi/AssetTracker.json');
-
 import * as ArtifactBridgeHubImport from './abi/Bridgehub.json';
 import * as ArtifactInteropCenterImport from './abi/InteropCenter.json';
 import * as ArtifactInteropHandlerImport from './abi/InteropHandler.json';
@@ -58,6 +47,8 @@ import * as ArtifactMintableERC20Import from './abi/TestnetERC20Token.json';
 import * as ArtifactL1AssetRouterImport from './abi/L1AssetRouter.json';
 import * as ArtifactAssetTrackerImport from './abi/AssetTracker.json';
 
+import * as ArtifactCounterImport from './abi/Counter.json';
+
 export const ArtifactBridgeHub = ArtifactBridgeHubImport;
 export const ArtifactInteropCenter = ArtifactInteropCenterImport;
 export const ArtifactInteropHandler = ArtifactInteropHandlerImport;
@@ -67,3 +58,4 @@ export const ArtifactNativeTokenVault = ArtifactNativeTokenVaultImport;
 export const ArtifactMintableERC20 = ArtifactMintableERC20Import;
 export const ArtifactL1AssetRouter = ArtifactL1AssetRouterImport;
 export const ArtifactAssetTracker = ArtifactAssetTrackerImport;
+export const ArtifactCounter = ArtifactCounterImport;

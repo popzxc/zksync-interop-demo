@@ -79,7 +79,34 @@ export class InteropTxSender {
         return txReceipt;
     }
 
-    async callContract(): Promise<void> { }
+    async callContract(targetChainId: bigint, targetAddress: string, targetCalldata: string): Promise<zksync.types.TransactionReceipt> {
+        const feeValue = ethers.parseEther('0.2');
+        console.log(`Calling contract on target chain ${targetChainId} at address ${targetAddress} with calldata ${targetCalldata}`);
+        const txReceipt = await fromInterop1RequestInterop(
+            this.wallet.address,
+            this.interopContracts.interopCenter,
+            targetChainId,
+            [
+                {
+                    directCall: true,
+                    nextContract: L2_STANDARD_TRIGGER_ACCOUNT_ADDRESS,
+                    data: '0x',
+                    value: 0n,
+                    requestedInteropCallValue: feeValue
+                }
+            ],
+            [
+                {
+                    directCall: true,
+                    nextContract: targetAddress,
+                    data: targetCalldata,
+                    value: 0n,
+                    requestedInteropCallValue: 0n
+                }
+            ]
+        );
+        return txReceipt;
+    }
 }
 
 

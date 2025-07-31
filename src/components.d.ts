@@ -12,6 +12,7 @@ declare module 'vue' {
     Block: typeof import('./components/Block.vue')['default']
     Chain: typeof import('./components/chain/Chain.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
+    InfoPopup: typeof import('./components/InfoPopup.vue')['default']
     InteropRequest: typeof import('./components/InteropRequest.vue')['default']
     Registry: typeof import('./components/chain/Registry.vue')['default']
     RequestList: typeof import('./components/RequestList.vue')['default']

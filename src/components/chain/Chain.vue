@@ -112,25 +112,49 @@ onUnmounted(() => {
     
     <v-divider></v-divider>
     
-    <v-card-item> Sender address: {{ data.sender }}</v-card-item>
+    <v-card-item>
+      <InfoPopup mainText="Sender address:" helpText="This is the address of the interop wallet on this chain. All the transactions initiated on this chain will be sent from this account." />
+      {{ data.sender }}
+    </v-card-item>
     <v-card-item> Balance: {{ ethers.formatEther(data.senderBalance) }} ETH</v-card-item>
-    <v-card-item> {{ data.erc20Symbol }} address: {{ data.erc20Address }}</v-card-item>
-    <v-card-item> {{ data.erc20Symbol }} balance: {{ ethers.formatEther(data.erc20Balance) }}</v-card-item>
+    <v-card-item> 
+      {{ data.erc20Symbol }}
+      <InfoPopup mainText="address:" helpText="Native ERC20 token on this chain." />
+      {{ data.erc20Address }}
+    </v-card-item>
+    <v-card-item>
+      {{ data.erc20Symbol }}
+      <InfoPopup mainText="balance:" helpText="Token will be automatically minted when you will initiate your first interop tx." />
+      {{ ethers.formatEther(data.erc20Balance) }}
+    </v-card-item>
 
     <v-divider></v-divider>
     
-    <v-card-item> Aliased address on {{ connectedChain.name }}: {{ data.aliasedSender }}</v-card-item>
-    <v-card-item> Aliased token on {{ connectedChain.name }} is {{ data.aliasedErc20Status }}</v-card-item>
-    <v-card-item> {{ data.aliasedErc20Symbol }} address on {{ connectedChain.name }}: {{ data.aliasedErc20Address }}</v-card-item>
-    <v-card-item> {{ data.aliasedErc20Symbol }} Balance on {{ connectedChain.name }} (aliased): {{ ethers.formatEther(data.erc20BalanceOnConnectedChain) }}</v-card-item>
+    <v-card-item>
+      <InfoPopup mainText="Aliased address" helpText="When you're sending an interop tx, it will not be initiated from the account you sent it from; instead an 'aliased' account will be deployed using a deterministic algorithm and it will be an initiator of transaction on the target chain" />
+       on {{ connectedChain.name }}: {{ data.aliasedSender }}
+    </v-card-item>
+    <v-card-item>
+      <InfoPopup mainText="Aliased token" helpText="When you transfer interop token to another chain, an 'aliased' version of this token will be automatically deployed there upon first interop transfer _finalization_. Before that, aliased token doesn't exist on the destination chain." />
+      on {{ connectedChain.name }} is {{ data.aliasedErc20Status }}
+    </v-card-item>
+    <v-card-item v-if="aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} address on {{ connectedChain.name }}: {{ data.aliasedErc20Address }}</v-card-item>
+    <v-card-item v-if="aliasedErc20Status == 'deployed'"> {{ data.aliasedErc20Symbol }} Balance on {{ connectedChain.name }} (aliased): {{ ethers.formatEther(data.erc20BalanceOnConnectedChain) }}</v-card-item>
     
     
     <v-divider></v-divider>
 
-    <v-card-item> Counter address: {{ data.counterAddress }}</v-card-item>
+    <v-card-item>
+      <InfoPopup mainText="Counter" helpText="Just a simple counter contract. Can be called from any chain, doesn't have any interop specific functionality" />
+      
+      address: {{ data.counterAddress }}
+    </v-card-item>
     <v-card-item> Counter value: {{ data.counterValue }}</v-card-item>
-    <v-card-item> Last caller: {{ data.counterLastCaller }}</v-card-item>
-    
+    <v-card-item>
+      <InfoPopup mainText="Last caller:" helpText="The last account that called the counter contract. When calling through interop, you can see that this will be an aliased account from the corresponding chain." />
+      {{ data.counterLastCaller }}
+    </v-card-item>
+
     <v-card-item>
       <SubmitInteropTxButton :action="ButtonAction.TransferToken" :from="chain.kind" :to="connectedChain.kind" />
     </v-card-item>

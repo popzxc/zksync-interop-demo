@@ -27,7 +27,21 @@ function getActionLabel(action, to) {
     }
 }
 
+function getHelpText(action) {
+    switch (action) {
+        case ButtonAction.TransferToken:
+            return `Transfer native token to ${props.to} chain. The amount is automatically chosen`;
+        case ButtonAction.IncrementCounter:
+            return `Increment counter on ${props.to} chain using interop`;
+        case ButtonAction.IncrementCounterSameChain:
+            return `Increment counter on ${from.kind} chain. This will call the counter contract directly on the same chain (no interop involved).`;
+        default:
+            throw new Error(`Unknown action: ${action}`);
+    }
+}
+
 const actionLabel = getActionLabel(props.action, props.to);
+const helpText = getHelpText(props.action);
 
 async function transferToken() {
     console.log(`Transfer token init`);
@@ -80,7 +94,7 @@ async function sendTx() {
 
 <template>
     <v-btn variant="outlined" @click="sendTx">
-      {{ actionLabel }}
+      <InfoPopup :mainText="actionLabel" :helpText="helpText" />
     </v-btn>
 
 </template>

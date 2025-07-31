@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 
 import { ChainKind } from '../../types';
 import useChain from '../../composables/useChain';
+import useHelpState from '../../composables/useHelpState';
 
 import Chain from './Chain.vue'
 import RequestList from '../RequestList.vue';
@@ -13,6 +14,8 @@ const gateway = useChain(ChainKind.Gateway);
 
 const isReady = ref(false);
 const status = ref('Initializing chains...');
+
+const { toggleHelp } = useHelpState();
 
 onMounted(async () => {
   status.value = 'Initializing gateway chain';
@@ -33,6 +36,7 @@ onMounted(async () => {
       <div class="mb-8 text-center">
         <div class="text-body-2 font-weight-light mb-n1">Welcome to</div>
         <h1 class="text-h2 font-weight-bold">ZKsync Interop Demo</h1>
+        <v-btn @click=toggleHelp>Toggle help</v-btn>
       </div>
       
       <v-row>

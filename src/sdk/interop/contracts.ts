@@ -4,8 +4,11 @@ import { ArtifactInteropCenter, ArtifactInteropHandler, ArtifactNativeTokenVault
 
 
 export class InteropContracts {
+    // Contract that is used to initiate interop requests.
     public interopCenter: zksync.Contract;
+    // Manages native token assets, can be used e.g. to know the token address on the target chain.
     public nativeTokenVault: zksync.Contract;
+    // Contract that is used to finalize interop requests.
     public interopHandler: zksync.Contract;
 
 
@@ -15,6 +18,11 @@ export class InteropContracts {
         this.interopHandler = new zksync.Contract(L2_INTEROP_HANDLER_ADDRESS, ArtifactInteropHandler.abi, runner);
     }
 
+    /**
+     * Returns the aliased account address for the given address on the target chain.
+     * `InteropContracts` should be instantiated with the provider of the *target* chain,
+     * but address and chainId are provided from the *source* chain.
+     */
     public async aliasedAccount(address: string, chainId: bigint): Promise<string> {
         return await this.interopHandler.getAliasedAccount(address, chainId);
     }

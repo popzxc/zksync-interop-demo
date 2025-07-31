@@ -29,6 +29,15 @@ export class InteropTxSender {
         );
     }
 
+    /**
+     * Will initiate the interop token transfer to another chain.
+     * 
+     * @param tokenAddress address of the token on the _source_ chain
+     * @param amount amount of token to transfer
+     * @param targetChainId chain ID of the target chain
+     * @param targetProvider target provider (used to calculate aliased account on the target chain)
+     * @returns 
+     */
     async initiateInteropTransfer(
         tokenAddress: string,
         amount: bigint,
@@ -41,6 +50,8 @@ export class InteropTxSender {
             const mintAmount = ethers.parseEther('5000');
             const approveTx = await erc20.approve(L2_NATIVE_TOKEN_VAULT_ADDRESS, mintAmount);
             await approveTx.wait();
+
+            // Minting is obviously not a part of the logic, it's here just because it's a demo.
             const mintTx = await erc20.mint(this.wallet.address, mintAmount);
             await mintTx.wait();
         }
@@ -79,6 +90,15 @@ export class InteropTxSender {
         return txReceipt;
     }
 
+    /**
+     * Calls any contract on the target chain using interop.
+     * The call will be performed from the *aliased account* on the target chain.
+     * 
+     * @param targetChainId target chain ID
+     * @param targetAddress address of the contract on the target chain (doesn't have to be interop-aware)
+     * @param targetCalldata calldata to be used in call
+     * @returns 
+     */
     async callContract(targetChainId: bigint, targetAddress: string, targetCalldata: string): Promise<zksync.types.TransactionReceipt> {
         const feeValue = ethers.parseEther('0.2');
         console.log(`Calling contract on target chain ${targetChainId} at address ${targetAddress} with calldata ${targetCalldata}`);
